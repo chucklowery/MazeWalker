@@ -28,4 +28,8 @@ public enum Tile {
     public boolean isPassable() {
         return passable;
     }
+
+    public boolean isGoal() {
+        return this.equals(ENDING_LOCATION);
+    }
 }

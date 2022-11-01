@@ -11,6 +11,7 @@ public class ChucksPlayer implements MazeWanderer {
     Map map = new Map();
     Stack<Direction> moves = new Stack<>();
     Queue<Direction> nextMove = new LinkedList<>();
+    Stack<Direction> prefer = new Stack<>();
 
 
     @Override
@@ -27,9 +28,11 @@ public class ChucksPlayer implements MazeWanderer {
         if (direction != null) {
             moves.push(direction);
             map.move(direction);
+            prefer.push(direction);
             return direction;
         } else {
             while ((direction = getDirection()) == null && !moves.isEmpty()) {
+                System.out.println("Reverse");
                 Direction d = reverse(moves.pop());
                 nextMove.add(d);
                 map.move(d);
@@ -55,6 +58,16 @@ public class ChucksPlayer implements MazeWanderer {
     }
 
     private Direction getDirection() {
+        Direction next = findGoal();
+        if (next != null)
+            return next;
+
+        if (!prefer.isEmpty())
+            if(map.isPassable(prefer.peek()))
+                return prefer.pop();
+            else
+                prefer.pop();
+
         double random = Math.random() * 100;
         int start = (int) (random);
 
@@ -63,11 +76,17 @@ public class ChucksPlayer implements MazeWanderer {
         for (int i = 0; i < values.length; i++) {
             order[i] = values[(start + i) % values.length];
         }
-
         for (Direction direction : order)
             if (map.isPassable(direction))
-                return direction;
+                next = direction;
 
+        return next;
+    }
+
+    private Direction findGoal() {
+        for (Direction direction : Direction.values())
+            if (map.isGoal(direction))
+                return direction;
         return null;
     }
 
@@ -105,6 +124,15 @@ public class ChucksPlayer implements MazeWanderer {
 
         public Cell west() {
             return cells[row][column - 1];
+        }
+
+        public boolean isGoal(Direction direction) {
+            Cell cell = getCellByDirection(direction);
+            try {
+                return cell.tile.isGoal();
+            } catch (Exception e) {
+                return false;
+            }
         }
 
         public boolean isPassable(Direction direction) {

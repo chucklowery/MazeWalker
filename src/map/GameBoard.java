@@ -2,13 +2,15 @@ package map;
 
 public class GameBoard {
 
+    String title;
     Tile[][] board;
     Position player;
     Position start;
     Position end;
 
-    public GameBoard(Tile[][] board) {
+    public GameBoard(Tile[][] board, String title) {
         this.board = board;
+        this.title = title;
         start = findFirst(board, Tile.STARTING_LOCATION);
         end = findFirst(board, Tile.ENDING_LOCATION);
     }
@@ -20,6 +22,10 @@ public class GameBoard {
                     return new Position(row, column);
 
         return null;
+    }
+
+    public String getTitle() {
+        return title;
     }
 
     public Position getStart() {

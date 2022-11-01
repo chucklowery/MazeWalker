@@ -27,15 +27,22 @@ import map.MapLoader;
 import map.Position;
 import map.Tile;
 
+import java.io.File;
 import java.io.IOException;
+import java.net.URL;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class Maze extends Application {
-    private double SQUARE_SIZE = 32;
+    private double SQUARE_SIZE = 16;
 
     static Color[] squareColors = new Color[Tile.values().length];
     BorderPane borderPane = new BorderPane();
 
     private GameBoard gameBoard;
+    private Map<String, GameBoard> boards;
+
     GridPane board = new GridPane();
     Label[][] accessCounts;
     HBox controlBar = new HBox();
@@ -50,8 +57,8 @@ public class Maze extends Application {
 
 
     static {
-        squareColors[Tile.LAND.ordinal()] = Color.SANDYBROWN;
-        squareColors[Tile.WATER.ordinal()] = Color.BLUE;
+        squareColors[Tile.LAND.ordinal()] = Color.LIGHTGRAY;
+        squareColors[Tile.WATER.ordinal()] = new Color(0.163, 0.173, 0.228, 1);
         squareColors[Tile.STARTING_LOCATION.ordinal()] = Color.WHITE;
         squareColors[Tile.ENDING_LOCATION.ordinal()] = Color.GREEN;
     }
@@ -60,16 +67,24 @@ public class Maze extends Application {
 
 
     public void init() throws Exception {
+        URL maps = Thread.currentThread().getContextClassLoader().getResource("maps");
+        boards = Arrays.stream(Objects.requireNonNull(new File(maps.getPath())
+                        .listFiles()))
+                .map(f -> new MapLoader().load(f))
+
+                .collect(Collectors.toMap(GameBoard::getTitle,
+                        Function.identity()));
+
         robotController = new RobotController(this);
         board = new GridPane();
-        loadMap("maps/welcome.map");
+        loadMap("Welcome");
         DEAD.setFont(Font.font("Verdana", FontWeight.BOLD, 20));
         DEAD.setTextFill(Color.RED);
 
     }
 
     private void loadMap(String name) {
-        gameBoard = laodGameBoard(name);
+        gameBoard = boards.get(name);
         gameBoard.setPlayerPosition(gameBoard.getStart());
 
         initGUIBoard();
@@ -89,14 +104,6 @@ public class Maze extends Application {
                 accessCounts[row][col].setTextFill(Color.DARKBLUE);
                 board.add(accessCounts[row][col], col, row);
             }
-        }
-    }
-
-    private GameBoard laodGameBoard(String name) {
-        try {
-            return new MapLoader().load(Thread.currentThread().getContextClassLoader().getResourceAsStream(name));
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
         }
     }
 
@@ -120,7 +127,11 @@ public class Maze extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        ObservableList<String> options = FXCollections.observableArrayList("One", "Two", "Three", "Four", "Five", "Seven");
+        primaryStage.setWidth(1160.0);
+
+        ObservableList<String> options = FXCollections.observableArrayList(
+                boards.keySet().stream().sorted().filter(s->!s.equals("Welcome")).collect(Collectors.toList())
+        );
         mapSelection = new ComboBox(options);
         playerSelection = new ComboBox(FXCollections.observableArrayList(robotController.getPlayerOptions()));
 
@@ -149,7 +160,9 @@ public class Maze extends Application {
             String player = (String) playerSelection.getValue();
 
             robotController.setPlayer(player);
-            loadMap(getMap(mapSelection));
+
+            loadMap((String)mapSelection.getValue());
+
             robotController.setGameBoard(gameBoard);
             robotController.reset();
 
@@ -180,29 +193,6 @@ public class Maze extends Application {
 
 
         primaryStage.show();
-    }
-
-    private String getMap(ComboBox mapSelection) {
-        String value = (String) mapSelection.getValue();
-        String mapName;
-        if (value == null || value.isEmpty()) {
-            mapName = "maps/map4.map";
-        } else if (value == "One") {
-            mapName = "maps/map1.map";
-        } else if (value == "Two") {
-            mapName = "maps/map2.map";
-        } else if (value == "Three") {
-            mapName = "maps/map3.map";
-        } else if (value == "Four") {
-            mapName = "maps/map4.map";
-        } else if (value == "Five") {
-            mapName = "maps/map5.map";
-        } else if(value == "Seven") {
-            mapName = "maps/map7.map";
-        } else {
-            mapName = "maps/map4.map";
-        }
-        return mapName;
     }
 
     public void setPlayerPosition(Position newPosition) {
@@ -254,17 +244,13 @@ public class Maze extends Application {
         robotController.shutdown();
     }
 
-    public void killPlayer(Position newPosition ) {
+    public void killPlayer(Position newPosition) {
         Platform.runLater(() -> {
             System.out.println("Killing Player");
             enable();
             board.getChildren().remove(player);
 
             board.add(DEAD, newPosition.getColumn(), newPosition.getRow());
-
-
-            //Label label = accessCounts[newPosition.getRow()][newPosition.getColumn()];
-            //label.setText("X");
         });
     }
 }

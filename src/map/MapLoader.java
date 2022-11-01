@@ -1,13 +1,17 @@
 package map;
 
 import java.io.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 public class MapLoader {
 
-    public GameBoard load(File file) throws IOException {
+    public GameBoard load(File file){
         try(FileInputStream stream = new FileInputStream(file)) {
             return load(stream);
+        } catch (IOException io) {
+            throw new IllegalStateException("Unable to load game board " + file.getName());
         }
     }
 
@@ -20,15 +24,22 @@ public class MapLoader {
     private GameBoard load(BufferedReader reader) throws IOException {
         String s = reader.readLine();
         if (s == null)
-            return new GameBoard(new Tile[0][0]);
+            return new GameBoard(new Tile[0][0], "Unknown");
 
-        String[] dimensions = s.split(" ");
-        int height = Integer.parseInt(dimensions[0]);
-        int width = Integer.parseInt(dimensions[1]);
+        Pattern pattern = Pattern.compile("([0-9]+) ([0-9]+)(.+)?");
+        Matcher matcher = pattern.matcher(s);
+        int height = 0;
+        int width = 0;
+        String title = "Unknown";
+        if(matcher.matches()) {
+            height = Integer.parseInt(matcher.group(1));
+            width = Integer.parseInt(matcher.group(2));
+            title = matcher.group(3).trim();
+        }
 
         Tile[][] tiles = parseTiles(reader, height, width);
 
-        return new GameBoard(tiles);
+        return new GameBoard(tiles, title);
     }
 
     private Tile[][] parseTiles(BufferedReader reader, int height, int width) throws IOException {
