@@ -2,7 +2,7 @@ package player;
 
 import map.Tile;
 
-public class Environment implements Sensor {
+public class SensorArray implements Sensor {
     public Tile north;
     public Tile east;
     public Tile south;

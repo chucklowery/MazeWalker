@@ -13,7 +13,6 @@ public class ChucksPlayer implements MazeWanderer {
     Queue<Direction> nextMove = new LinkedList<>();
     Stack<Direction> prefer = new Stack<>();
 
-
     @Override
     public Direction move(Sensor sensor) {
         if (!nextMove.isEmpty())

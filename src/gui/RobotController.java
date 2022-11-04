@@ -15,6 +15,7 @@ class RobotController implements Runnable {
 
     static {
         playerOptions.put("Chuck's Wanderer", ChucksPlayer.class);
+        playerOptions.put("Chuck's 2nd Wanderer", StudentMazeWanderer.class);
         playerOptions.put("Jason's Wanderer", JasonsMazeWanderer.class);
         playerOptions.put("John's Wanderer", JohnsMazeWanderer.class);
         playerOptions.put("Parker's Wanderer", ParkerSmithsMazeWanderer.class);
@@ -22,6 +23,8 @@ class RobotController implements Runnable {
         playerOptions.put("Ruth's Wanderer", RuthsRealMazeWanderer.class);
         playerOptions.put("Fun Wanderer", RuthsMazeWanderer.class);
         playerOptions.put("Ruth's Other Wanderer", RuthsMazeWanderer2.class);
+        playerOptions.put("Melissa's Other Wanderer", Robot.class);
+        playerOptions.put("Kevin's Robot", KevinsMazeWanderer.class);
 
     }
 
@@ -69,6 +72,8 @@ class RobotController implements Runnable {
             Direction move;
             try {
                 move = brain.move(readSensors(current));
+                if(move == null)
+                    throw new PlayerReturnedNullDirection("");
                 Position next = nextPosition(current, move);
 
                 Tile tile = gameBoard.getTile(next.getRow(), next.getColumn());
@@ -78,7 +83,7 @@ class RobotController implements Runnable {
 
                 if (!tile.isPassable()) {
                     current = next;
-                    throw new IllegalStateException("Bad Position");
+                    throw new PlayerOffTheGrid();
                 }
 
                 if (gameBoard.getEnd() != null) {
@@ -94,7 +99,6 @@ class RobotController implements Runnable {
                 pause();
                 continue;
             }
-
 
             sleep(50);
         }
@@ -143,8 +147,8 @@ class RobotController implements Runnable {
         return pause;
     }
 
-    private Environment readSensors(Position position) {
-        Environment sensor = new Environment();
+    private SensorArray readSensors(Position position) {
+        SensorArray sensor = new SensorArray();
         sensor.north = gameBoard.getTile(position.getRow() - 1, position.getColumn());
         sensor.east = gameBoard.getTile(position.getRow(), position.getColumn() + 1);
         sensor.south = gameBoard.getTile(position.getRow() + 1, position.getColumn());
